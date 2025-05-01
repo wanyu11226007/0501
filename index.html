@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Two-Player Shooting Game</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+        canvas {
+            display: block;
+        }
+        #info {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: white;
+            font-size: 20px;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body>
+    <div id="info"></div>
+    <canvas id="gameCanvas"></canvas>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const player = { x: 100, y: canvas.height / 2, size: 20, lives: 5 };
+        const ai = { x: canvas.width - 100, y: canvas.height / 2, size: 20, lives: 5 };
+        const bullets = [];
+        const aiBullets = [];
+        const bulletSpeed = 5;
+        const aiSpeed = 2;
+
+        const info = document.getElementById('info');
+
+        const geminiApiKey = 'AIzaSyC9o6H8gcCYbe9rPzEMSw_UN9OYb8ctJ-Y'; // 請將此替換為您的實際 API 金鑰
+        const geminiApiUrl = 'https://api.gemini.com/v1/pubticker/btcusd'; // 範例 API URL
+
+        async function fetchGeminiData() {
+            try {
+                const response = await fetch(geminiApiUrl, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-GEMINI-APIKEY': geminiApiKey
+                    }
+                });
+                if (!response.ok) throw new Error('Network response was not ok');
+                const data = await response.json();
+                console.log('Gemini Data:', data);
+                return data;
+            } catch (error) {
+                console.error('Error fetching Gemini data:', error);
+                return null;
+            }
+        }
+
+        async function updateGeminiInfo() {
+            const data = await fetchGeminiData();
+            if (data) {
+                info.textContent += ` | BTC/USD: ${data.last}`;
+            }
+        }
+
+        // 在遊戲初始化時或定期更新
+        setInterval(updateGeminiInfo, 10000); // 每 10 秒更新一次
+
+        canvas.addEventListener('mousemove', (e) => {
+            player.y = e.clientY;
+        });
+
+        canvas.addEventListener('click', () => {
+            bullets.push({ x: player.x + player.size, y: player.y, dx: bulletSpeed });
+        });
+
+        function updateAI() {
+            if (ai.y < player.y) ai.y += aiSpeed;
+            else if (ai.y > player.y) ai.y -= aiSpeed;
+
+            if (Math.random() < 0.02) {
+                aiBullets.push({ x: ai.x - ai.size, y: ai.y, dx: -bulletSpeed });
+            }
+        }
+
+        function updateBullets() {
+            bullets.forEach((bullet, index) => {
+                bullet.x += bullet.dx;
+                if (bullet.x > canvas.width) bullets.splice(index, 1);
+                if (bullet.x > ai.x - ai.size && bullet.y > ai.y - ai.size && bullet.y < ai.y + ai.size) {
+                    ai.lives--;
+                    bullets.splice(index, 1);
+                }
+            });
+
+            aiBullets.forEach((bullet, index) => {
+                bullet.x += bullet.dx;
+                if (bullet.x < 0) aiBullets.splice(index, 1);
+                if (bullet.x < player.x + player.size && bullet.y > player.y - player.size && bullet.y < player.y + player.size) {
+                    player.lives--;
+                    aiBullets.splice(index, 1);
+                }
+            });
+        }
+
+        function drawPlayer() {
+            ctx.fillStyle = 'blue';
+            ctx.fillRect(player.x, player.y - player.size / 2, player.size, player.size);
+        }
+
+        function drawAI() {
+            ctx.fillStyle = 'red';
+            ctx.fillRect(ai.x - ai.size, ai.y - ai.size / 2, ai.size, ai.size);
+        }
+
+        function drawBullets() {
+            ctx.fillStyle = 'yellow';
+            bullets.forEach(bullet => {
+                ctx.fillRect(bullet.x, bullet.y - 2, 10, 4);
+            });
+
+            ctx.fillStyle = 'orange';
+            aiBullets.forEach(bullet => {
+                ctx.fillRect(bullet.x, bullet.y - 2, 10, 4);
+            });
+        }
+
+        function updateInfo() {
+            info.textContent = `Player Lives: ${player.lives} | AI Lives: ${ai.lives}`;
+        }
+
+        function gameLoop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            if (player.lives <= 0 || ai.lives <= 0) {
+                ctx.fillStyle = 'white';
+                ctx.font = '40px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(player.lives <= 0 ? 'AI Wins!' : 'Player Wins!', canvas.width / 2, canvas.height / 2);
+                return;
+            }
+
+            updateAI();
+            updateBullets();
+            drawPlayer();
+            drawAI();
+            drawBullets();
+            updateInfo();
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        gameLoop();
+    </script>
+</body>
+</html>
