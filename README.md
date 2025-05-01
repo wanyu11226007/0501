@@ -40,12 +40,7 @@ const geminiApiUrl = 'https://api.gemini.com/v1/pubticker/交易對';
 1. 使用任何 HTTP 伺服器（如 VS Code 的 Live Server 擴展）啟動專案。
 2. 確保網路連線正常，以便與 Gemini API 通信。
 
-## 注意事項
-- 請勿將您的 API 金鑰暴露在公開的程式碼庫中。
-- 如果您不需要 Gemini API 整合，可以移除相關程式碼。
 
 ## 聯絡方式
 如果您有任何問題或建議，請聯絡開發者。
 
-- Email: [example@example.com](mailto:example@example.com)
-- GitHub: [YourGitHubProfile](https://github.com/YourGitHubProfile)
